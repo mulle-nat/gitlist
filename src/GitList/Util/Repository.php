@@ -126,6 +126,24 @@ class Repository
         return 'text';
     }
 
+    public function getIcon($repo, $branch = 'master')
+    {
+        $repository = $this->app['git']->getRepository($this->app['git.repos'] . $repo);
+        $files = $repository->getTree($branch)->output();
+
+        foreach ($files as $file) {
+            if (preg_match('/^webicon*/i', $file['name'])) {
+                return array(
+                    'filename' => $file['name'],
+                    'type'     => pathinfo( $file['name'], PATHINFO_EXTENSION),
+                    'content'  => base64_encode( $repository->getBlob("$branch:\"{$file['name']}\"")->output())
+                );
+            }
+        }
+
+        return array();
+    }
+
     public function getReadme($repo, $branch = 'master')
     {
         $repository = $this->app['git']->getRepository($this->app['git.repos'] . $repo);
@@ -135,6 +153,7 @@ class Repository
             if (preg_match('/^readme*/i', $file['name'])) {
                 return array(
                     'filename' => $file['name'],
+                    'type'     => pathinfo( $file['name'], PATHINFO_EXTENSION),
                     'content'  => $repository->getBlob("$branch:\"{$file['name']}\"")->output()
                 );
             }
